@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IMVU Bot Manager - Controle de Salas</title>
+    <meta name="description" content="Painel de controle e automação para bots IMVU em salas de chat.">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: #1e293b;
+            --border-color: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-blue: #3b82f6;
+            --accent-blue-hover: #2563eb;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-amber: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Navigation Header */
+        header {
+            background: #111827;
+            border-bottom: 1px solid var(--border-color);
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-area h1 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-secondary);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-btn.active {
+            background: #2563eb;
+            color: #fff;
+        }
+
+        /* Main Container */
+        main {
+            flex: 1;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .view-section {
+            display: none;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .section-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* Room Cards Grid */
+        .rooms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .room-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+            transition: border-color 0.2s, transform 0.2s;
+        }
+
+        .room-card:hover {
+            border-color: #475569;
+        }
+
+        .room-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .room-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+
+        .room-id-badge {
+            font-size: 11px;
+            font-family: monospace;
+            background: #0f172a;
+            color: #94a3b8;
+            padding: 3px 8px;
+            border-radius: 4px;
+            border: 1px solid #334155;
+            margin-top: 4px;
+            display: inline-block;
+        }
+
+        .status-badge {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-idle {
+            background: #1e293b;
+            color: #94a3b8;
+            border: 1px solid #475569;
+        }
+
+        .status-starting {
+            background: #451a03;
+            color: #f59e0b;
+            border: 1px solid #b45309;
+        }
+
+        .status-running {
+            background: #064e3b;
+            color: #10b981;
+            border: 1px solid #059669;
+        }
+
+        .status-error {
+            background: #450a0a;
+            color: #f87171;
+            border: 1px solid #dc2626;
+        }
+
+        .status-stopped {
+            background: #1e293b;
+            color: #94a3b8;
+            border: 1px solid #475569;
+        }
+
+        .room-url-container {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #cbd5e1;
+            word-break: break-all;
+        }
+
+        .room-url-container i {
+            color: var(--accent-blue);
+        }
+
+        .btn-action {
+            width: 100%;
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-send {
+            background: var(--accent-blue);
+            color: #fff;
+        }
+
+        .btn-send:hover {
+            background: var(--accent-blue-hover);
+        }
+
+        .btn-remove {
+            background: var(--accent-red);
+            color: #fff;
+        }
+
+        .btn-remove:hover {
+            background: #dc2626;
+        }
+
+        .btn-loading {
+            background: #b45309;
+            color: #fff;
+            cursor: not-allowed;
+        }
+
+        /* Error and Logs Container */
+        .room-log-box {
+            background: #090d16;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            padding: 10px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 11px;
+            max-height: 120px;
+            overflow-y: auto;
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .room-log-box.visible {
+            display: flex;
+        }
+
+        .log-line {
+            color: #94a3b8;
+            line-height: 1.4;
+            white-space: pre-wrap;
+        }
+
+        .log-line.error {
+            color: #f87171;
+            font-weight: 600;
+        }
+
+        .log-line.success {
+            color: #34d399;
+        }
+
+        /* Settings View */
+        .settings-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 24px;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #cbd5e1;
+        }
+
+        .form-group input {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            padding: 10px 14px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            border-color: var(--accent-blue);
+        }
+
+        .form-hint {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .btn-primary {
+            background: var(--accent-blue);
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-blue-hover);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(2px);
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 440px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 8px;
+        }
+
+        .btn-secondary {
+            background: #334155;
+            color: #cbd5e1;
+            border: none;
+            padding: 9px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header>
+        <div class="logo-area">
+            <h1><i class="fa-solid fa-robot" style="color: #3b82f6;"></i> IMVU Bot Controller</h1>
+        </div>
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="switchTab('rooms')"><i class="fa-solid fa-door-open"></i> Rooms</button>
+            <button class="tab-btn" onclick="switchTab('settings')"><i class="fa-solid fa-gear"></i> Settings</button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Rooms View -->
+        <section id="view-rooms" class="view-section active">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">Salas IMVU</h2>
+                    <p class="section-subtitle">Envie e controle bots diretamente nas salas de chat do IMVU Next.</p>
+                </div>
+                <button class="btn-primary" onclick="openAddRoomModal()"><i class="fa-solid fa-plus"></i> Nova Sala</button>
+            </div>
+
+            <div class="rooms-grid" id="rooms-container">
+                <!-- Cards renderizados via JS -->
+            </div>
+        </section>
+
+        <!-- Settings View -->
+        <section id="view-settings" class="view-section">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">Configurações do IMVU</h2>
+                    <p class="section-subtitle">As credenciais são armazenadas com segurança no localStorage do seu navegador.</p>
+                </div>
+            </div>
+
+            <div class="settings-card">
+                <div class="form-group">
+                    <label for="settings-username"><i class="fa-solid fa-user"></i> Nome de Usuário / Avatar</label>
+                    <input type="text" id="settings-username" placeholder="SeuAvatarIMVU" />
+                    <span class="form-hint">Nome de usuário utilizado no login do IMVU Next.</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="settings-password"><i class="fa-solid fa-lock"></i> Senha</label>
+                    <input type="password" id="settings-password" placeholder="••••••••••••" />
+                    <span class="form-hint">A senha não fica gravada em arquivos de configuração do servidor.</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="settings-backend-url"><i class="fa-solid fa-server"></i> URL do Backend</label>
+                    <input type="text" id="settings-backend-url" placeholder="http://localhost:3001" />
+                    <span class="form-hint">Padrão: http://localhost:3001 (ou detecção automática).</span>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button class="btn-primary" onclick="saveSettings()"><i class="fa-solid fa-check"></i> Salvar Configurações</button>
+                    <button class="btn-secondary" onclick="clearSettings()"><i class="fa-solid fa-trash"></i> Limpar Credenciais</button>
+                </div>
+                <div id="settings-status" style="font-size: 13px; font-weight: 500; display: none;"></div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal de Credenciais Obrigatórias antes de Enviar -->
+    <div id="credential-modal" class="modal-overlay">
+        <div class="modal-card">
+            <h3 class="modal-title"><i class="fa-solid fa-key" style="color: #f59e0b;"></i> Credenciais IMVU Necessárias</h3>
+            <p style="font-size: 13px; color: #94a3b8;">Informe o usuário e senha do IMVU para autenticar o bot e entrar na sala selecionada.</p>
+            
+            <div class="form-group">
+                <label for="modal-username">Usuário / Avatar</label>
+                <input type="text" id="modal-username" placeholder="AvatarName" />
+            </div>
+
+            <div class="form-group">
+                <label for="modal-password">Senha</label>
+                <input type="password" id="modal-password" placeholder="••••••••" />
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeCredentialModal()">Cancelar</button>
+                <button class="btn-primary" onclick="confirmCredentialModal()"><i class="fa-solid fa-paper-plane"></i> Salvar e Enviar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nova Sala -->
+    <div id="add-room-modal" class="modal-overlay">
+        <div class="modal-card">
+            <h3 class="modal-title"><i class="fa-solid fa-plus-circle" style="color: #3b82f6;"></i> Adicionar Sala IMVU</h3>
+            
+            <div class="form-group">
+                <label for="new-room-name">Nome da Sala</label>
+                <input type="text" id="new-room-name" placeholder="Ex: Sala VIP Principal" />
+            </div>
+
+            <div class="form-group">
+                <label for="new-room-url">URL da Sala (IMVU Next)</label>
+                <input type="text" id="new-room-url" placeholder="https://www.imvu.com/next/chat/room-XXXX-YYYY" />
+                <span class="form-hint">Formato esperado: https://www.imvu.com/next/chat/room-XXXX-YYYY</span>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeAddRoomModal()">Cancelar</button>
+                <button class="btn-primary" onclick="saveNewRoom()"><i class="fa-solid fa-check"></i> Adicionar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Lista padrão de salas (persistida no localStorage)
+        const DEFAULT_ROOMS = [
+            {
+                roomId: 'room-10492-38491',
+                name: 'Sala VIP Principal',
+                roomUrl: 'https://www.imvu.com/next/chat/room-10492-38491'
+            },
+            {
+                roomId: 'room-28491-99201',
+                name: 'Lounge Social',
+                roomUrl: 'https://www.imvu.com/next/chat/room-28491-99201'
+            },
+            {
+                roomId: 'room-44102-12093',
+                name: 'Clube Noturno IMVU',
+                roomUrl: 'https://www.imvu.com/next/chat/room-44102-12093'
+            }
+        ];
+
+        // Estado local dos bots por roomId: { status: 'idle'|'starting'|'running'|'stopped'|'error', logs: [], pid: null, error: null }
+        let botStates = {};
+        let pendingRoomIdForCredentials = null;
+        let pollInterval = null;
+
+        function getBackendUrl() {
+            const saved = localStorage.getItem('imvu_backend_url');
+            if (saved && saved.trim()) return saved.trim();
+            // Se estiver em 5173 ou outro host local, apontar para 3001
+            if (window.location.port === '5173') return 'http://localhost:3001';
+            // Se estiver no preview do AI Studio (porta 3000), usar a mesma origem
+            return window.location.origin;
+        }
+
+        function getRooms() {
+            const stored = localStorage.getItem('imvu_rooms');
+            if (stored) {
+                try { return JSON.parse(stored); } catch (e) {}
+            }
+            return DEFAULT_ROOMS;
+        }
+
+        function saveRooms(rooms) {
+            localStorage.setItem('imvu_rooms', JSON.stringify(rooms));
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+
+            if (tab === 'rooms') {
+                document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
+                document.getElementById('view-rooms').classList.add('active');
+            } else {
+                document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
+                document.getElementById('view-settings').classList.add('active');
+                loadSettings();
+            }
+        }
+
+        function loadSettings() {
+            document.getElementById('settings-username').value = localStorage.getItem('imvu_bot_username') || '';
+            document.getElementById('settings-password').value = localStorage.getItem('imvu_bot_password') || '';
+            document.getElementById('settings-backend-url').value = localStorage.getItem('imvu_backend_url') || getBackendUrl();
+        }
+
+        function saveSettings() {
+            const user = document.getElementById('settings-username').value.trim();
+            const pass = document.getElementById('settings-password').value.trim();
+            const backend = document.getElementById('settings-backend-url').value.trim();
+
+            localStorage.setItem('imvu_bot_username', user);
+            localStorage.setItem('imvu_bot_password', pass);
+            if (backend) {
+                localStorage.setItem('imvu_backend_url', backend);
+            }
+
+            const status = document.getElementById('settings-status');
+            status.style.display = 'block';
+            status.style.color = '#34d399';
+            status.textContent = 'Configurações salvas com sucesso!';
+            setTimeout(() => { status.style.display = 'none'; }, 3000);
+        }
+
+        function clearSettings() {
+            localStorage.removeItem('imvu_bot_username');
+            localStorage.removeItem('imvu_bot_password');
+            loadSettings();
+
+            const status = document.getElementById('settings-status');
+            status.style.display = 'block';
+            status.style.color = '#f87171';
+            status.textContent = 'Credenciais removidas do navegador.';
+            setTimeout(() => { status.style.display = 'none'; }, 3000);
+        }
+
+        // Renderização dos cards de sala
+        function renderRooms() {
+            const container = document.getElementById('rooms-container');
+            const rooms = getRooms();
+            container.innerHTML = '';
+
+            rooms.forEach(room => {
+                const state = botStates[room.roomId] || { status: 'idle', logs: [], error: null };
+                const card = document.createElement('div');
+                card.className = 'room-card';
+                card.id = `card-${room.roomId}`;
+
+                // Status badge
+                let badgeClass = 'status-idle';
+                let badgeText = '⚪ Desconectado';
+                let btnHtml = `<button class="btn-action btn-send" onclick="handleSendBot('${room.roomId}')"><i class="fa-solid fa-paper-plane"></i> Enviar Bots</button>`;
+
+                if (state.status === 'starting') {
+                    badgeClass = 'status-starting';
+                    badgeText = '<span class="spinner"></span> Iniciando Chrome...';
+                    btnHtml = `<button class="btn-action btn-loading" disabled><span class="spinner"></span> Iniciando...</button>`;
+                } else if (state.status === 'running') {
+                    badgeClass = 'status-running';
+                    badgeText = '🟢 Conectado na Sala';
+                    btnHtml = `<button class="btn-action btn-remove" onclick="handleStopBot('${room.roomId}')"><i class="fa-solid fa-stop"></i> Remover Bots</button>`;
+                } else if (state.status === 'error') {
+                    badgeClass = 'status-error';
+                    badgeText = '🔴 Erro na Execução';
+                    btnHtml = `<button class="btn-action btn-send" onclick="handleSendBot('${room.roomId}')"><i class="fa-solid fa-rotate-right"></i> Tentar Novamente</button>`;
+                }
+
+                const hasLogs = (state.logs && state.logs.length > 0) || state.error;
+
+                card.innerHTML = `
+                    <div class="room-top">
+                        <div>
+                            <div class="room-name">${escapeHtml(room.name)}</div>
+                            <span class="room-id-badge">${escapeHtml(room.roomId)}</span>
+                        </div>
+                        <span class="status-badge ${badgeClass}">${badgeText}</span>
+                    </div>
+
+                    <div class="room-url-container">
+                        <i class="fa-solid fa-link"></i>
+                        <span>${escapeHtml(room.roomUrl)}</span>
+                    </div>
+
+                    <div id="action-wrapper-${room.roomId}">
+                        ${btnHtml}
+                    </div>
+
+                    <div id="log-box-${room.roomId}" class="room-log-box ${hasLogs ? 'visible' : ''}">
+                        ${state.logs && state.logs.length > 0 
+                            ? state.logs.map(l => `<div class="log-line ${l.includes('ERRO') || l.includes('FALHA') ? 'error' : l.includes('Conectado') ? 'success' : ''}">${escapeHtml(l)}</div>`).join('') 
+                            : (state.error ? `<div class="log-line error">${escapeHtml(state.error)}</div>` : '')}
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>"']/g, m => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            })[m]);
+        }
+
+        // Clique no botão "Enviar Bots"
+        function handleSendBot(roomId) {
+            const username = localStorage.getItem('imvu_bot_username');
+            const password = localStorage.getItem('imvu_bot_password');
+
+            // Se não houver credenciais salvas, abrir modal
+            if (!username || !password) {
+                pendingRoomIdForCredentials = roomId;
+                document.getElementById('modal-username').value = username || '';
+                document.getElementById('modal-password').value = '';
+                document.getElementById('credential-modal').classList.add('active');
+                return;
+            }
+
+            executeSendBot(roomId, username, password);
+        }
+
+        function confirmCredentialModal() {
+            const user = document.getElementById('modal-username').value.trim();
+            const pass = document.getElementById('modal-password').value.trim();
+
+            if (!user || !pass) {
+                alert('Por favor, informe usuário e senha do IMVU.');
+                return;
+            }
+
+            localStorage.setItem('imvu_bot_username', user);
+            localStorage.setItem('imvu_bot_password', pass);
+            closeCredentialModal();
+
+            if (pendingRoomIdForCredentials) {
+                executeSendBot(pendingRoomIdForCredentials, user, pass);
+                pendingRoomIdForCredentials = null;
+            }
+        }
+
+        function closeCredentialModal() {
+            document.getElementById('credential-modal').classList.remove('active');
+            pendingRoomIdForCredentials = null;
+        }
+
+        async function executeSendBot(roomId, username, password) {
+            const rooms = getRooms();
+            const room = rooms.find(r => r.roomId === roomId);
+            if (!room) return;
+
+            // Atualiza estado local imediatamente para "starting"
+            botStates[roomId] = {
+                status: 'starting',
+                logs: ['Iniciando processo do bot no backend...'],
+                error: null
+            };
+            renderRooms();
+
+            const backend = getBackendUrl();
+            const apiUrl = `${backend}/api/bot/start`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username,
+                        password,
+                        roomUrl: room.roomUrl,
+                        roomId: room.roomId
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    botStates[roomId].status = 'error';
+                    botStates[roomId].error = data.error || 'Falha ao iniciar o bot no backend.';
+                    botStates[roomId].logs.push(`[ERRO]: ${data.error || 'Falha na resposta do servidor'}`);
+                } else {
+                    botStates[roomId].status = 'starting';
+                    botStates[roomId].pid = data.pid;
+                    botStates[roomId].logs.push(`Processo Python disparado (PID: ${data.pid}). Aguardando abertura do Chrome...`);
+                }
+            } catch (err) {
+                botStates[roomId].status = 'error';
+                botStates[roomId].error = `Erro de conexão com ${apiUrl}: ${err.message}`;
+                botStates[roomId].logs.push(`[ERRO DE REDE]: Não foi possível conectar a ${apiUrl}. Certifique-se de que o backend está ativo.`);
+            }
+
+            renderRooms();
+            startPollingStatus(roomId);
+        }
+
+        async function handleStopBot(roomId) {
+            const backend = getBackendUrl();
+            const apiUrl = `${backend}/api/bot/stop`;
+
+            if (botStates[roomId]) {
+                botStates[roomId].logs.push('Encerrando bot...');
+            }
+            renderRooms();
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ roomId })
+                });
+                const data = await response.json();
+
+                if (botStates[roomId]) {
+                    botStates[roomId].status = 'stopped';
+                    botStates[roomId].logs.push('Bot finalizado com sucesso.');
+                }
+            } catch (err) {
+                if (botStates[roomId]) {
+                    botStates[roomId].logs.push(`Erro ao solicitar encerramento: ${err.message}`);
+                }
+            }
+
+            renderRooms();
+        }
+
+        // Polling do status e logs do bot
+        function startPollingStatus(roomId) {
+            if (pollInterval) clearInterval(pollInterval);
+
+            pollInterval = setInterval(async () => {
+                const backend = getBackendUrl();
+                try {
+                    const res = await fetch(`${backend}/api/bot/status/${roomId}`);
+                    if (!res.ok) return;
+                    const data = await res.json();
+
+                    if (data && data.roomId) {
+                        botStates[roomId] = {
+                            status: data.status,
+                            logs: data.logs || [],
+                            error: data.error,
+                            pid: data.pid
+                        };
+                        renderRooms();
+
+                        // Se estiver parado ou erro, diminuir polling
+                        if (data.status === 'stopped' || data.status === 'error') {
+                            clearInterval(pollInterval);
+                            pollInterval = null;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Polling error:', e.message);
+                }
+            }, 1500);
+        }
+
+        // Modal de Adicionar Sala
+        function openAddRoomModal() {
+            document.getElementById('new-room-name').value = '';
+            document.getElementById('new-room-url').value = '';
+            document.getElementById('add-room-modal').classList.add('active');
+        }
+
+        function closeAddRoomModal() {
+            document.getElementById('add-room-modal').classList.remove('active');
+        }
+
+        function saveNewRoom() {
+            const name = document.getElementById('new-room-name').value.trim();
+            const url = document.getElementById('new-room-url').value.trim();
+
+            if (!name || !url) {
+                alert('Preencha o nome e a URL da sala.');
+                return;
+            }
+
+            // Extrair id da URL ou gerar id
+            let roomId = 'room-' + Date.now();
+            const match = url.match(/\/next\/chat\/(room-[a-zA-Z0-9_-]+)/);
+            if (match && match[1]) {
+                roomId = match[1];
+            }
+
+            const rooms = getRooms();
+            rooms.push({ roomId, name, roomUrl: url });
+            saveRooms(rooms);
+
+            closeAddRoomModal();
+            renderRooms();
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            renderRooms();
+        });
+    </script>
+</body>
+
+</html>

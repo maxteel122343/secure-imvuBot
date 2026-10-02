@@ -1,7 +1,2 @@
-selenium
-requests
-beautifulsoup4
-lxml
-pyyaml
-pytz
-playsound
+selenium>=4.15.0
+webdriver-manager>=4.0.0

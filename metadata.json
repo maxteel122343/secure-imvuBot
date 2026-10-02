@@ -1,0 +1,8 @@
+{
+  "name": "AI Browser Controller",
+  "description": "Visual AI-powered browser automation controller using Gemini multimodal vision and Playwright.",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
