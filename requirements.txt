@@ -1,0 +1,7 @@
+selenium
+requests
+beautifulsoup4
+lxml
+pyyaml
+pytz
+playsound
